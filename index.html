@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ការវាយតម្លៃសុខភាព (Health Assessment Quiz)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kantumruy Pro', sans-serif; }
+        
+        /* Custom Checkbox & Radio Styles */
+        .check-indicator {
+            transition: all 0.2s ease-in-out;
+        }
+        input[type="checkbox"]:checked + .check-indicator {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+        input[type="radio"]:checked + .check-indicator {
+            background-color: #2563eb;
+            border-color: #2563eb;
+            box-shadow: inset 0 0 0 3px white;
+        }
+
+        /* Feedback Animations */
+        .option-correct {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+            animation: pulse-green 0.4s ease-out;
+            color: #166534;
+            font-weight: bold;
+        }
+        .option-incorrect {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            animation: shake 0.4s ease-in-out;
+            color: #991b1b;
+            text-decoration: line-through;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        
+        .disabled-labels { pointer-events: none; opacity: 0.9; }
+        .result-box { display: none; }
+        .chapter-header {
+            background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 py-10 px-4">
+    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-200">
+        <!-- Header -->
+        <div class="bg-blue-800 p-8 text-white text-center">
+            <h1 class="text-3xl md:text-4xl font-bold mb-3">សំណួរសាកល្បងការវាយតម្លៃសុខភាពទូលំទូលាយ (Health Assessment Comprehensive Quiz)</h1>
+            <p class="text-lg text-blue-100">សំណួរពហុជ្រើសរើសសម្រាប់មេរៀនទី ១ ដល់ ទី ៧ (Multiple Choice Questions for Lesson 1 to 7)</p>
+        </div>
+
+        <div class="p-6 md:p-10">
+            <div id="quiz-container" class="space-y-12">
+                <!-- Quiz Content Will Be Generated Here -->
+            </div>
+
+            <!-- Grading Section -->
+            <div id="result" class="result-box mt-12 p-8 bg-green-50 rounded-2xl border-4 border-green-200 text-center shadow-inner">
+                <h3 class="text-3xl font-bold text-green-800 mb-2">ពិន្ទុសរុបរបស់អ្នក (Final Score)</h3>
+                <div class="text-5xl font-extrabold text-green-600 mb-4"><span id="score">0</span> / <span id="total-qs">0</span></div>
+                <p class="text-green-700 text-lg">សូមពិនិត្យមើលចម្លើយដែលអ្នកបានធ្វើខុសនៅខាងលើ។ (Please review your mistakes above.)</p>
+                <button onclick="location.reload()" class="mt-6 bg-white text-green-700 border-2 border-green-600 hover:bg-green-600 hover:text-white font-bold py-3 px-8 rounded-full transition">
+                    សាកល្បងម្ដងទៀត (Retry)
+                </button>
+            </div>
+
+            <div class="mt-12 flex justify-center" id="submit-btn-container">
+                <button onclick="gradeQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold py-4 px-14 rounded-full shadow-lg transition transform hover:-translate-y-1 active:scale-95">
+                    បញ្ជូនចម្លើយ និងពិនិត្យពិន្ទុ (Submit and Check Score)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Full Question Bank
+        const mcqs = [
+            // មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១. ប្រភេទធំៗទាំងបីនៃការវាយតម្លៃសុខភាព (Health Assessment):", t: 3, a: [0, 1, 2], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពគ្លីនិក (Clinical Health Assessment)", "ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "២. ប្រភេទធំៗទាំងពីរនៃការវាយតម្លៃសុខភាពគ្លីនិក (Clinical Health Assessment):", t: 2, a: [2, 3], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពចំគោលដៅ (Focus Health Assessment)", "ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "៣. តើអត្ថន័យនេះ \"ការវាយតម្លៃផលប៉ះពាល់លើសុខភាពសាធារណៈពីសារធាតុគ្រោះថ្នាក់ដែលបញ្ចេញទៅក្នុងបរិស្ថាន ឈានទៅដល់ការបង្កើតអនុសាសន៍ និងវិធានការចាំបាច់ដើម្បីកាត់បន្ថយ ឬការពារផលប៉ះពាល់ដល់សុខភាពមនុស្ស\" (The assessment of impact on public health from the released hazardous substances to environment, leading to develop recommendations and measures needed to mitigate or prevent human health effects) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [0], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពគ្លីនិក (Clinical Health Assessment)", "ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "៤. តើអត្ថន័យនេះ \"សំដៅលើវិធានការរៀបចំទាំងអស់ (មិនថាជាសាធារណៈ ឬឯកជន) ដើម្បីបង្ករបង្ការជំងឺ លើកកម្ពស់សុខភាព និងពន្យារជីវិតក្នុងចំណោមប្រជាជនទាំងមូល\" (refers to all organized measures (whether public or private) to prevent disease, promote health, and prolong life among the population as a whole) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [0], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពគ្លីនិក (Clinical Health Assessment)", "ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "៥. តើអត្ថន័យនេះ \"អ្នកផ្តល់សេវាថែទាំសុខភាព វាយតម្លៃ រៀបចំផែនការ អនុវត្ត និងវាយតម្លៃការថែទាំតាមបែបគិលានុបដ្ឋាក ក្នុងកិច្ចសហការជាមួយបុគ្គល និងក្រុមថែទាំសុខភាពពហុជំនាញ ដើម្បីសម្រេចបាននូវគោលដៅ និងលទ្ធផលសុខភាព\" (The health care provider assesses, plans, implements and evaluates nursing care in collaboration with individuals and the multidisciplinary health care team so as to achieve goals and health outcomes) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [2], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពគ្លីនិក (Clinical Health Assessment)", "ការវាយតម្លៃចំគោលដៅ (Focus Assessment)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "៦. តើអត្ថន័យនេះ \"តួនាទីរបស់វាគឺដើម្បីកំណត់កត្តាដែលប៉ះពាល់ដល់សុខភាពរបស់ប្រជាជន និងកំណត់ភាពអាចរកបាននៃធនធាននៅក្នុងសហគមន៍ ដើម្បីដោះស្រាយកត្តាទាំងនេះឱ្យបានគ្រប់គ្រាន់\" (its role is to identify factors that affect the health of a population and determine the availability of resources within the community to adequately address these factors) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [1], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពគ្លីនិក (Clinical Health Assessment)", "ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "៧. តើអត្ថន័យនេះ \"ការវាយតម្លៃថែទាំទូលំទូលាយ រួមមានប្រវត្តិអ្នកជំងឺ រូបរាងទូទៅ ការពិនិត្យរាងកាយ និងសញ្ញាជីវិតដែលបានបញ្ចប់នៅពេលចូលសម្រាកពេទ្យ\" (Comprehensive nursing assessment including patient history, general appearance, physical examination and vital signs completed at the time of admission.) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [3], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពគ្លីនិក (Clinical Health Assessment)", "ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "៨. កត្តាដែលអាចបង្កគ្រោះថ្នាក់ដល់សុខភាពសាធារណៈមានអ្វីខ្លះ? (What are the factors that can harm public health?)", t: 3, a: [0, 1, 2], o: ["សារធាតុគ្រោះថ្នាក់ (Hazardous substance)", "អគារគ្មានសុវត្ថិភាព និងវត្ថុគ្រោះថ្នាក់ (Unsafe Building and dangerous objects)", "ទីតាំងសំណល់ និងគ្រោះថ្នាក់រូបវន្ត (Waste site and physical hazards)", "ផ្លូវបោះបង់ចោល (Abandoned roads)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "៩. យន្តការ (Mechanism) ដែលអាចបង្កគ្រោះថ្នាក់ដល់សុខភាពសាធារណៈមានអ្វីខ្លះ?", t: 3, a: [0, 1, 2], o: ["ការដកដង្ហើម, ការប៉ះពាល់ (Breathing, touching)", "ការហូបចុក, ការផឹក (Eating, drinking)", "ការធ្វើការ (Working)", "ចម្ងាយ និងបរិមាណ (Distance and quantity)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១០. កម្រិតគ្រោះថ្នាក់ (Dangerous Degree) ដែលគួរយកចិត្តទុកដាក់ក្នុងការវាយតម្លៃសុខភាពសាធារណៈមានអ្វីខ្លះ?", t: 3, a: [0, 1, 2], o: ["ចម្ងាយ និងផលវិបាក (Distance and complication)", "កំហាប់ និងបរិមាណ (Concentration and Quantity)", "ភាពញឹកញាប់ និងភាពធ្ងន់ធ្ងរ (Frequency and severity)", "ហូប ផឹក និងធ្វើការ (Eating, drinking and working)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១១. កិច្ចការដែលត្រូវយកចិត្តទុកដាក់ក្នុងការវាយតម្លៃសុខភាពសាធារណៈមានអ្វីខ្លះ?", t: 3, a: [0, 1, 2], o: ["ការវាយតម្លៃផលប៉ះពាល់ (Harms assessment)", "ការវាយតម្លៃយន្តការ (Mechanism assessment)", "ការវាយតម្លៃកម្រិតគ្រោះថ្នាក់ (Dangerous degree assessment)", "ការដកដង្ហើម និងការប៉ះពាល់ (Breathing and touching)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១២. ជាទូទៅការវាយតម្លៃសុខភាពសាធារណៈ ប្រើប្រាស់នូវប្រភពព័ត៌មានបីគឺអ្វីខ្លះ?", t: 3, a: [0, 1, 2], o: ["ទិន្នន័យបរិស្ថាន (Environmental data)", "ទិន្នន័យសុខភាព (Health data)", "ក្តីបារម្ភរបស់សហគមន៍ (Community concerns)", "ប្រភពបណ្ណាល័យ (Library source)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១៣. តើអត្ថន័យនេះ \"ការវាស់វែងសារធាតុគីមី និងផ្លូវដែលមនុស្សអាចប៉ះពាល់ជាមួយពួកវា\" (measurements of chemicals and the pathways that people could come into contact with them.) គួររាប់បញ្ចូលក្នុងប្រភពព័ត៌មានមួយណា?", t: 1, a: [0], o: ["ទិន្នន័យបរិស្ថាន (Environmental data)", "ទិន្នន័យសុខភាព (Health data)", "ក្តីបារម្ភរបស់សហគមន៍ (Community concerns)", "ប្រភពបណ្ណាល័យ (Library source)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១៤. តើអត្ថន័យនេះ \"ព័ត៌មានដែលមានស្រាប់អំពីអត្រានៃការឈឺ របួស ជំងឺ ឬការស្លាប់នៅទីតាំងមួយ បើធៀបនឹងអត្រាថ្នាក់ជាតិ និងរដ្ឋ\" (available information on a site rates of illness, injury, disease, or death compared with national and state rates.) គួររាប់បញ្ចូលក្នុងប្រភពព័ត៌មានមួយណា?", t: 1, a: [1], o: ["ទិន្នន័យបរិស្ថាន (Environmental data)", "ទិន្នន័យសុខភាព (Health data)", "ក្តីបារម្ភរបស់សហគមន៍ (Community concerns)", "ប្រភពបណ្ណាល័យ (Library source)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១៥. តើអត្ថន័យនេះ \"ព័ត៌មានពីសាធារណៈជនទូទៅអំពីរបៀបដែលទីតាំងនោះអាចប៉ះពាល់ដល់សុខភាព ឬគុណភាពជីវិតរបស់ពួកគេ\" (information from the general public about how the site may have affected their health or quality of life.) គួររាប់បញ្ចូលក្នុងប្រភពព័ត៌មានមួយណា?", t: 1, a: [2], o: ["ទិន្នន័យបរិស្ថាន (Environmental data)", "ទិន្នន័យសុខភាព (Health data)", "ក្តីបារម្ភរបស់សហគមន៍ (Community concerns)", "ប្រភពបណ្ណាល័យ (Library source)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១៦. សេចក្តីសន្និដ្ឋានក្រោយពីការវាយតម្លៃសុខភាពសាធារណៈ អាចជា?", t: 3, a: [0, 1, 2], o: ["គ្រោះថ្នាក់សុខភាពសាធារណៈបន្ទាន់ (Urgent Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈ (Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈមិនច្បាស់លាស់ (Indeterminate Public Health Hazard)", "សារធាតុគ្រោះថ្នាក់ (Hazardous substance)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១៧. សេចក្តីសន្និដ្ឋានក្រោយពីការវាយតម្លៃសុខភាពសាធារណៈ អាចជា?", t: 3, a: [0, 1, 2], o: ["គ្រោះថ្នាក់សុខភាពសាធារណៈបន្ទាន់ (Urgent Public Health Hazard)", "គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈ (No Public Health Hazard)", "គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈជាក់ស្តែង (No Apparent Public Health Hazard)", "ទីតាំងសំណល់ និងអគារគ្មានសុវត្ថិភាព (Waste site and unsafe building)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១៨. តើអត្ថន័យនេះ \"ភស្តុតាងនៃការប៉ះពាល់រយៈពេលខ្លី ឬលទ្ធភាពនៃការប៉ះពាល់នាពេលអនាគត ចំពោះបរិមាណគ្រោះថ្នាក់នៃកត្តាបង្កគ្រោះថ្នាក់ ដែលទាមទារការអន្តរាគមន៍រហ័ស ដើម្បីបញ្ឈប់មនុស្សមិនឱ្យប៉ះពាល់\" (Evidence of short-term exposure or likely future exposure to a harmful amount of a hazardous factors that requires quick intervention to stop people from being exposed.) គួរស្ថិតក្នុងសេចក្តីសន្និដ្ឋានមួយណា?", t: 1, a: [0], o: ["គ្រោះថ្នាក់សុខភាពសាធារណៈបន្ទាន់ (Urgent Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈ (Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈមិនច្បាស់លាស់ (Indeterminate Public Health Hazard)", "គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈជាក់ស្តែង (No Apparent Public Health Hazard)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "១៩. តើអត្ថន័យនេះ \"ភស្តុតាងនៃគ្រោះថ្នាក់រូបវន្តមួយចំនួន ឬការប៉ះពាល់រយៈពេលវែង ឬលទ្ធភាពនៃការប៉ះពាល់នាពេលអនាគត ចំពោះបរិមាណនៃកត្តាបង្កគ្រោះថ្នាក់ ដែលអាចបណ្តាលឱ្យមានផលប៉ះពាល់ដល់សុខភាព\" (Evidence of certain physical hazards or long-term exposure or likely future exposure to an amount of a hazardous factors that might result in harmful health effects.) គួរស្ថិតក្នុងសេចក្តីសន្និដ្ឋានមួយណា?", t: 1, a: [1], o: ["គ្រោះថ្នាក់សុខភាពសាធារណៈបន្ទាន់ (Urgent Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈ (Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈមិនច្បាស់លាស់ (Indeterminate Public Health Hazard)", "គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈជាក់ស្តែង (No Apparent Public Health Hazard)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "២០. តើអត្ថន័យនេះ \"ការវិនិច្ឆ័យប្រកបដោយវិជ្ជាជីវៈអំពីគ្រោះថ្នាក់សុខភាពមិនអាចធ្វើបានទេ ព្រោះព័ត៌មានសំខាន់ៗសម្រាប់សេចក្តីសម្រេចបែបនេះ បាត់បង់ ឬមិនមាន\" (Professional judgment about the health hazard cannot be made because information critical to such a decision is missing or unavailable.) គួរស្ថិតក្នុងសេចក្តីសន្និដ្ឋានមួយណា?", t: 1, a: [2], o: ["គ្រោះថ្នាក់សុខភាពសាធារណៈបន្ទាន់ (Urgent Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈ (Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈមិនច្បាស់លាស់ (Indeterminate Public Health Hazard)", "គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈជាក់ស្តែង (No Apparent Public Health Hazard)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "២១. តើអត្ថន័យនេះ \"ភស្តុតាងដែលថាការប៉ះពាល់នឹងកត្តាបង្កគ្រោះថ្នាក់អាចនឹងកើតឡើងកាលពីអតីតកាល ឬប្រហែលជានៅតែកើតឡើងនៅឡើយ ប៉ុន្តែការប៉ះពាល់នោះមិនត្រូវបានរំពឹងថានឹងបង្កឱ្យមានផលប៉ះពាល់ដល់សុខភាពឡើយ\" (Evidence that exposure to a hazardous factors may have occurred in the past or might still be occurring now, but the exposure is not expected to cause harmful health effects) គួរស្ថិតក្នុងសេចក្តីសន្និដ្ឋានមួយណា?", t: 1, a: [3], o: ["គ្រោះថ្នាក់សុខភាពសាធារណៈបន្ទាន់ (Urgent Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈ (Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈមិនច្បាស់លាស់ (Indeterminate Public Health Hazard)", "គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈជាក់ស្តែង (No Apparent Public Health Hazard)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "២២. តើអត្ថន័យនេះ \"គ្មានភស្តុតាងនៃការប៉ះពាល់នឹងសារធាតុគ្រោះថ្នាក់ដែលពាក់ព័ន្ធនឹងទីតាំងនោះទេ\" (No evidence of exposure to any site-related hazardous substance) គួរស្ថិតក្នុងសេចក្តីសន្និដ្ឋានមួយណា?", t: 1, a: [0], o: ["គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈ (No Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈ (Public Health Hazard)", "គ្រោះថ្នាក់សុខភាពសាធារណៈមិនច្បាស់លាស់ (Indeterminate Public Health Hazard)", "គ្មានគ្រោះថ្នាក់សុខភាពសាធារណៈជាក់ស្តែង (No Apparent Public Health Hazard)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", q: "២៣. ក្រោយពីការវាយតម្លៃសុខភាពសាធារណៈ តើយើងគួរមានវិធានការអ្វីខ្លះ?", t: 3, a: [0, 1, 2], o: ["ការសម្អាតទីតាំង (Site cleanup)", "ការដាក់កម្រិតការចូលទីតាំង (Limiting site access)", "ការអប់រំសុខភាព (Health education)", "ការរៀបចំរបាយការណ៍ (Report preparation)"] },
+            { c: "មេរៀនទី ១: ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", discussion: "សំណួរពិភាក្សា (Discussion Question)៖ រៀបរាប់ដោយសង្ខេបអំពីដំណើរការអនុវត្តន៍ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)" },
+
+            // មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "១. សកម្មភាពបីដែលទាក់ទងនឹង ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment):", t: 3, a: [0, 1, 2], o: ["ការរៀបចំផែនការ និងបង្កើតក្រុម (Planning and forming a team and advisory group)", "ការប្រមូលទិន្នន័យ វិភាគ និងរៀបចំរបាយការណ៍ (Data collection, analysis, and report preparation)", "ការផ្សព្វផ្សាយលទ្ធផល (Communicating findings)", "ការអភិវឌ្ឍន៍សហគមន៍ (Community development)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "២. ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment) ត្រូវតែ (needs to):", t: 3, a: [0, 1, 2], o: ["ចូលរួមជាមួយដៃគូពាក់ព័ន្ធ (Engage relevant partners)", "ផ្តល់ព័ត៌មានដល់អ្នកសម្រេចចិត្ត (Inform decision makers)", "ពាក់ព័ន្ធនឹងអ្នកពាក់ព័ន្ធ (Involve stakeholders)", "ធ្វើការឯករាជ្យ (Work independently)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "៣. តើអត្ថន័យនេះ \"ដំណើរការដែលប្រើប្រាស់វិធីសាស្ត្របរិមាណ/គុណភាព ដើម្បីប្រមូល និងវិភាគទិន្នន័យជាប្រព័ន្ធ ដើម្បីយល់ពីសុខភាពនៅក្នុងសហគមន៍ជាក់លាក់មួយ\" (A process that uses quantitative/qualitative methods to systematically collect and analyze data to understand health within a specific community.) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [1], o: ["ការវាយតម្លៃសុខភាពសាធារណៈ (Public Health Assessment)", "ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", "ការវាយតម្លៃសុខភាពចំគោលដៅ (Focus Health Assessment)", "ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "៤. សមាជិករបស់ក្រុមវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment Team) ត្រូវតែជាបុគ្គលដែល:", t: 3, a: [0, 1, 2], o: ["មានការលើកទឹកចិត្ត (Motivation)", "អាចតំណាងឱ្យសមាជិកសហគមន៍បានទូលំទូលាយ (Can act as advocate for abroad range of community members)", "អាចតំណាងក្តីបារម្ភរបស់សហគមន៍ (Can represent the concerns of community members)", "មានធនធានច្រើនសម្រាប់ជួយសហគមន៍"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "៥. ដើម្បីជួយសម្រួលដល់ការប្រមូលទិន្នន័យសហគមន៍បឋម (Primary Community Data) យើងត្រូវរៀបចំផែនការជាមុន។ ក្នុងនោះយើងគួររៀបចំនូវ:", t: 3, a: [0, 1, 2], o: ["គោលការណ៍ណែនាំសម្រាប់ការសម្ភាសន៍ (Guideline for interview)", "វគ្គស្តាប់ (Listening session)", "ការពិភាក្សាក្រុមគោលដៅ (Focus group discussion)", "កំណត់អាទិភាពសុខភាព (Determine health priority)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "៦. ក្នុង ការវាយតម្លៃសុខភាពសហគមន៍ (Community health assessment), ទិន្នន័យបន្ទាប់បន្សំ (secondary data) ដែលគួរប្រមូលមានដូចជា:", t: 2, a: [0, 1], o: ["ស្ថិតិសុខភាព និងរបាយការណ៍ពាក់ព័ន្ធ (Health statistics of state and other related reports)", "ទិន្នន័យស្រាវជ្រាវដោយស្ថាប័នផ្សេង (Local data researched by other institutions)", "សាកសួរប្រជាជនក្នុងតំបន់ (Question local people)", "សង្កេតមើលទីតាំងផ្ទាល់ (Observe local site)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "៧. ក្នុង ការវាយតម្លៃសុខភាពសហគមន៍ (community health assessment), ដើម្បីវិភាគ និងបកស្រាយទិន្នន័យ (analyze and interpret data) យើងត្រូវការទិន្នន័យពីរប្រភេទគឺ:", t: 2, a: [0, 1], o: ["ទិន្នន័យបន្ទាប់បន្សំដែលពាក់ព័ន្ធ (Secondary data relevant to the community)", "ទិន្នន័យបឋមដែលពាក់ព័ន្ធ (Primary data related to the community)", "ទិន្នន័យបន្ទាប់បន្សំទាំងអស់ (All secondary data)", "ទិន្នន័យបឋមទាំងអស់ (All primary data)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "៨. \"ផ្នែកនេះបង្ហាញពីវិធីសាស្រ្តផ្សេងៗក្នុងការកំណត់អាទិភាពចំពោះបញ្ហាសុខភាពសហគមន៍ដែលបានលេចចេញក្នុងដំណាក់កាលទី ៤\" (The section presents various methods of setting priorities to the community health issues that emerged in Phase 4). តើផ្នែកនេះស្ថិតក្នុងដំណាក់កាលមួយណា?", t: 1, a: [0], o: ["កំណត់អាទិភាពថែទាំសុខភាព (Determine health care priorities)", "វិភាគ និងបកស្រាយទិន្នន័យ (Analyze and interpret data)", "ប្រមូលទិន្នន័យបន្ទាប់បន្សំ (Collect secondary data)", "ប្រមូលទិន្នន័យបឋម (Collect primary data)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "៩. សកម្មភាពបីពាក់ព័ន្ធនឹង ការកំណត់អាទិភាពសុខភាព (Determine health priorities) គឺ:", t: 3, a: [0, 1, 3], o: ["រាយការណ៍លទ្ធផលទៅសហគមន៍ (Report assessment result to community)", "ស្វែងរកមតិយោបល់ពីសហគមន៍ (Seek input and feedback from community)", "ផ្តល់យោបល់ពីវិធីសាស្រ្តចូលសហគមន៍ (Suggest on how to approach the community)", "ផ្សព្វផ្សាយព័ត៌មាន (Publicize the information)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "១០. ដើម្បីកំណត់អាទិភាពសុខភាព (Determine health priorities) យើងត្រូវការយ៉ាងតិចមនុស្សពីរក្រុមគឺ:", t: 2, a: [0, 1], o: ["ក្រុមវាយតម្លៃសហគមន៍ (Community Assessment Team)", "សមាជិកសហគមន៍ពាក់ព័ន្ធ (Relevant community members)", "អ្នកជំនាញបរទេស (Foreign experts)", "អ្នកជំនាញអន្តរជាតិ (International experts)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "១១. \"CHAT នឹងបង្កើតរបាយការណ៍ដាច់ដោយឡែកមួយ ដើម្បីកត់ត្រាដំណើរការ ក៏ដូចជារកឃើញនៃកិច្ចខិតខំប្រឹងប្រែងវាយតម្លៃទាំងមូល\" (CHAT will develop a stand-alone report to document the process as well as the findings of the entire assessment effort). តើសកម្មភាពនេះស្ថិតក្នុងដំណាក់កាលមួយណានៃ CHA (Community Health Assessment)?", t: 1, a: [0], o: ["បង្កើតឯកសារ CHA (Create the CHA document)", "វិភាគ និងបកស្រាយទិន្នន័យ (Analyze and interpret data)", "ប្រមូលទិន្នន័យបន្ទាប់បន្សំ (Collect secondary data)", "ប្រមូលទិន្នន័យបឋម (Collect primary data)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "១២. តើនៅចុងបញ្ចប់នៃដំណាក់កាលមួយណាដែលសហគមន៍នឹងត្រៀមខ្លួនរួចរាល់ដើម្បីប្តូរពីការវាយតម្លៃទៅជាសកម្មភាព ដោយបង្កើតផែនការសកម្មភាពសុខភាពសហគមន៍? (community will be ready to move from assessment to action by developing the community health action plans?)", t: 1, a: [0], o: ["បង្កើតឯកសារ CHA (Create the CHA document)", "វិភាគ និងបកស្រាយទិន្នន័យ (Analyze and interpret data)", "ប្រមូលទិន្នន័យបន្ទាប់បន្សំ (Collect secondary data)", "ប្រមូលទិន្នន័យបឋម (Collect primary data)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "១៣. \"CHAT នឹងឱ្យសហគមន៍ដឹងពីអ្វីដែលបានរកឃើញនៃការវាយតម្លៃសុខភាពសហគមន៍។ នេះផ្តោតលើរបៀបឈោងចាប់ និងផ្សព្វផ្សាយព័ត៌មាននៅទូទាំងតំបន់\" (The CHAT will let the community know what the findings of the community health assessment. This focuses on how to reach out and publicize the information throughout the area). តើសកម្មភាពនេះស្ថិតក្នុងដំណាក់កាលណាមួយនៃ CHA (Community Health Assessment)?", t: 1, a: [3], o: ["បង្កើតឯកសារ CHA (Create the CHA document)", "វិភាគ និងបកស្រាយទិន្នន័យ (Analyze and interpret data)", "ប្រមូលទិន្នន័យបន្ទាប់បន្សំ (Collect secondary data)", "ផ្សព្វផ្សាយឯកសារ CHA (Disseminate the CHA document)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "១៤. \"CHAT នឹងរៀបចំផែនការសកម្មភាពសម្រាប់ដោះស្រាយបញ្ហាសុខភាពដែលត្រូវបានចាត់ទុកថាជាអាទិភាព\" (The CHAT will develop a plan of action for addressing the health issues deemed as priorities). តើសកម្មភាពនេះស្ថិតក្នុងដំណាក់កាលណាមួយនៃ CHA (Community Health Assessment)?", t: 1, a: [2], o: ["បង្កើតឯកសារ CHA (Create the CHA document)", "វិភាគ និងបកស្រាយទិន្នន័យ (Analyze and interpret data)", "បង្កើតផែនការសកម្មភាព CHA (Develop CHA action plan)", "ផ្សព្វផ្សាយឯកសារ CHA (Disseminate the CHA document)"] },
+            { c: "មេរៀនទី ២: ការវាយតម្លៃសុខភាពសហគមន៍ (Community Health Assessment)", q: "១៥. ជ្រើសយកសកម្មភាពដែលពាក់ព័ន្ធនឹងដំណើរការនៃ ការវាយតម្លៃសុខភាពសហគមន៍ (CHA)?", t: 3, a: [0, 1, 2], o: ["បង្កើត និងផ្សព្វផ្សាយឯកសារ CHA (Create and disseminate the CHA document)", "បង្កើតក្រុម ប្រមូល និងវិភាគទិន្នន័យ (Form CHAT, collect, analyze, and interpret data)", "កំណត់អាទិភាព និងបង្កើតផែនការសកម្មភាព (Determine health priorities and develop CHA action plan)", "បរិច្ចាគធនធានដល់សហគមន៍ (Donate resources to the community)"] },
+
+            // មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១. នៅពេលធ្វើ ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment) យើងត្រូវពិនិត្យនិងស្រង់ទិន្នន័យទាក់ទងនឹងផ្នែកសំខាន់ៗចំនួនបីគឺ:", t: 3, a: [0, 1, 2], o: ["ទិន្នន័យជីវសាស្ត្រ/ប្រជាសាស្ត្ររបស់អ្នកជំងឺ (Patient Biological/demographic Data)", "ប្រវត្តិវេជ្ជសាស្ត្រ/អតីតកាល (Medical/Past History)", "ការជួបគ្រូពេទ្យ/បញ្ហាបច្ចុប្បន្ន (Medical Encounter)", "ប្រវត្តិសាច់ញាតិអ្នកជំងឺ (Patient’s relatives history)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២. ទិន្នន័យទាក់ទងនឹង Patient biological/demographic មានដូចជា:", t: 3, a: [0, 1, 2], o: ["ភេទ ភេទពីកំណើត ថ្ងៃខែឆ្នាំកំណើត (Patient sex, Sex at birth, Date of birth)", "ស្ថានភាពគ្រួសារ ជនជាតិ អាសយដ្ឋាន (Marital status, Ethnicity, Patient address)", "ជម្រើសនៃការប្រាស្រ័យទាក់ទង (Communication preference of patient)", "សញ្ញាជីវិត និងរោគសញ្ញា (Vital signs and Symptoms)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "៣. តើអត្ថន័យនេះ \"វាគឺជាកំណត់ត្រាបណ្តោយនៃអ្វីដែលបានកើតឡើងចំពោះអ្នកជំងឺតាំងពីកំណើត\" (It is a longitudinal record of what has happened to the patient since birth.) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [0], o: ["ប្រវត្តិវេជ្ជសាស្ត្រ/អតីតកាល (Medical/Past History)", "ការជួបគ្រូពេទ្យ/បញ្ហាបច្ចុប្បន្ន (Medical Encounter)", "ទិន្នន័យជីវសាស្ត្រ/ប្រជាសាស្ត្ររបស់អ្នកជំងឺ (Patient biological/demographic data)", "ការវាយតម្លៃចំគោលដៅ (Focus assessment)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "៤. តើអត្ថន័យនេះ \"ការវាយតម្លៃថែទាំទូលំទូលាយ រួមមានប្រវត្តិអ្នកជំងឺ រូបរាងទូទៅ ការពិនិត្យរាងកាយ និងសញ្ញាជីវិត ដែលបានបញ្ចប់នៅពេលចូលសម្រាកពេទ្យ\" (A comprehensive nursing assessment including patient history, general appearance, physical examination and vital signs completed at the time of admission) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [0], o: ["ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission assessment)", "ការវាយតម្លៃតាមវេន (Shift assessment)", "ការពិនិត្យរាងកាយ (Physical examination)", "ការវាយតម្លៃចំគោលដៅ (Focus assessment)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "៥. តើអត្ថន័យនេះ \"ការវាយតម្លៃថែទាំដែលបានបញ្ចប់នៅពេលចាប់ផ្តើមនៃវេននីមួយៗ ឬប្រសិនបើស្ថានភាពអ្នកជំងឺផ្លាស់ប្តូរនៅពេលផ្សេងទៀតក្នុងអំឡុងពេលវេនរបស់អ្នក\" (Nursing assessment completed at the commencement of each shift or if patient condition changes at any other time during your shift) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [1], o: ["ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission assessment)", "ការវាយតម្លៃតាមវេន (Shift assessment)", "ការពិនិត្យរាងកាយ (Physical examination)", "ការវាយតម្លៃចំគោលដៅ (Focus assessment)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "៦. តើអត្ថន័យនេះ \"ការវាយតម្លៃថែទាំលម្អិតនៃប្រព័ន្ធរាងកាយជាក់លាក់ដែលទាក់ទងនឹងបញ្ហាដែលបង្ហាញ ឬការព្រួយបារម្ភបច្ចុប្បន្នរបស់អ្នកជំងឺ\" (Detailed nursing assessment of specific body system(s) relating to the presenting problem or current concern(s) of the patient) សមស្របនឹងប្រភេទណាមួយនៃ ការវាយតម្លៃសុខភាព (Health Assessment) ជាងគេ?", t: 1, a: [3], o: ["ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission assessment)", "ការវាយតម្លៃតាមវេន (Shift assessment)", "ការពិនិត្យរាងកាយ (Physical examination)", "ការវាយតម្លៃចំគោលដៅ (Focus assessment)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "៧. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិវេជ្ជសាស្ត្រ/អតីតកាល (Medical/Past History):", t: 3, a: [0, 1, 2], o: ["ប្រវត្តិវះកាត់ (Surgical history)", "ប្រវត្តិរោគស្ត្រី-សម្ភព (Gyneco-obstetric history)", "ថ្នាំ និងប្រតិកម្មថ្នាំ (Medications and medical allergies)", "រោគសញ្ញាគោល (Chief complaints)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "៨. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិវេជ្ជសាស្ត្រ/អតីតកាល (Medical/Past History):", t: 3, a: [0, 1, 2], o: ["ប្រវត្តិការចាក់វ៉ាក់សាំង (Immunization history)", "ទម្លាប់ និងប្រវត្តិសង្គម (Habits and social history)", "ប្រវត្តិលូតលាស់ និងអភិវឌ្ឍន៍ (Growth and developmental history)", "ប្រវត្តិជំងឺបច្ចុប្បន្ន (History of present illness)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "៩. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិវេជ្ជសាស្ត្រ/អតីតកាល (Medical/Past History):", t: 3, a: [0, 1, 2], o: ["ការរវើរវាយ និងសុបិន (Fantasies and dream)", "ប្រវត្តិផ្លូវភេទ (Sexual history)", "ប្រវត្តិគ្រួសារ (Family history)", "រោគសញ្ញាបច្ចុប្បន្ន (Presenting complaints)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១០. តើអត្ថន័យនេះ \"សេចក្តីសង្ខេបនៃថ្នាំបច្ចុប្បន្ន និងពីមុនរបស់អ្នកជំងឺ ក៏ដូចជាអាឡែស៊ីវេជ្ជសាស្ត្រណាមួយ\" (a summary of the patient's current and previous medications as well as any medical allergies) សមស្របនឹងប្រភេទណាមួយនៃ Medical/past history ជាងគេ?", t: 1, a: [0], o: ["ថ្នាំ និងប្រតិកម្មថ្នាំ (Medication and medical allergies)", "ប្រវត្តិវះកាត់ (Surgical history)", "ប្រវត្តិសម្ភព (Obstetric history)", "ប្រវត្តិលូតលាស់ និងអភិវឌ្ឍន៍ (Growth and development history)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១១. តើអត្ថន័យនេះ \"កំណត់ត្រានៃការវះកាត់ដែលបានធ្វើឡើងសម្រាប់អ្នកជំងឺ រួមទាំងកាលបរិច្ឆេទនៃប្រតិបត្តិការ របាយការណ៍វះកាត់ និង/ឬការរៀបរាប់លម្អិតអំពីអ្វីដែលគ្រូពេទ្យវះកាត់បានធ្វើ\" (a chronicle of surgery performed for the patient including dates of operations, operative reports, and/or the detailed narrative of what the surgeon did) សមស្របនឹងប្រភេទណាមួយនៃ Medical/past history ជាងគេ?", t: 1, a: [1], o: ["ថ្នាំ និងប្រតិកម្មថ្នាំ (Medication and medical allergies)", "ប្រវត្តិវះកាត់ (Surgical history)", "ប្រវត្តិសម្ភព (Obstetric history)", "ប្រវត្តិលូតលាស់ និងអភិវឌ្ឍន៍ (Growth and development history)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១២. តើអត្ថន័យនេះ \"ប្រវត្តិសម្ភព រួមទាំងការមានផ្ទៃពោះ និងលទ្ធផលរបស់វា។ វាក៏រួមបញ្ចូលផងដែរនូវផលវិបាកណាមួយនៃការមានផ្ទៃពោះទាំងនេះ\" (The obstetric history including pregnancies and their outcomes. It also includes any complications of these pregnancies.) សមស្របនឹងប្រភេទណាមួយនៃ Medical/past history ជាងគេ?", t: 1, a: [2], o: ["ថ្នាំ និងប្រតិកម្មថ្នាំ (Medication and medical allergies)", "ប្រវត្តិវះកាត់ (Surgical history)", "ប្រវត្តិសម្ភព (Obstetric history)", "ប្រវត្តិលូតលាស់ និងអភិវឌ្ឍន៍ (Growth and development history)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១៣. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិលូតលាស់ និងអភិវឌ្ឍន៍ (growth and development history):", t: 3, a: [0, 1, 2], o: ["តារាងលូតលាស់ និងប្រវត្តិស្ត្រេសសង្គម (Growth charts and social stress history)", "តារាងអភិវឌ្ឍន៍បន្តបន្ទាប់ (Longitudinal charts of development)", "អាកប្បកិរិយាកុមារធៀបនឹងអ្នកដទៃ (Child’s behavior comparing others)", "បំណងប្រាថ្នា និងចក្ខុវិស័យអនាគត (Wish and vision in the future)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១៤. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិផ្លូវភេទ (Sexual history) របស់អ្នកជំងឺ:", t: 3, a: [0, 1, 2], o: ["ទំនាក់ទំនងផ្លូវភេទ (Sexual relationship)", "អាយុពេញវ័យ (Age of puberty)", "អាយុរៀបការ (Age of married)", "ស្ថានភាពគ្រួសារ (Family situation)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១៥. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិសង្គម (Social history) របស់អ្នកជំងឺ:", t: 3, a: [0, 1, 2], o: ["អាជីព មុខរបរ និងការបណ្តុះបណ្តាល (Careers, occupations and trainings)", "ទំនាក់ទំនងនៅកន្លែងធ្វើការ និងជុំវិញ (Relationship in work place and surroundings)", "សាសនា និងសហគមន៍ (Religious and community)", "ស្ថានភាពគ្រួសារ (Marital status)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១៦. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ទម្លាប់ (Habits) របស់អ្នកជំងឺ:", t: 3, a: [0, 1, 2], o: ["ប្រើថ្នាំជក់ គ្រឿងស្រវឹង សារធាតុផ្សេងៗ (Use tobacco, alcohol, other substances)", "លំហាត់ប្រាណ និងរបបអាហារ (Exercises and diet)", "ទម្លាប់ផ្លូវភេទ (Sexual habits)", "ទំនាក់ទំនងផ្លូវភេទ (Sexual relationship)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១៧. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិគ្រួសារ (Family history) របស់អ្នកជំងឺ:", t: 3, a: [0, 1, 2], o: ["តារាងគ្រួសារ (Family chart)", "ស្ថានភាពសុខភាពសមាជិកគ្រួសារ (Health status of family members)", "ទំនាក់ទំនងសមាជិកគ្រួសារ (Relationship of family members)", "ទំនាក់ទំនងអ្នកជំងឺក្នុងសហគមន៍ (Relationship of patent in community)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១៨. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ការជួបគ្រូពេទ្យ (Medical Encounter):", t: 3, a: [0, 1, 2], o: ["រោគសញ្ញាគោល (Chief complaint)", "ប្រវត្តិជំងឺបច្ចុប្បន្ន (History of present illness)", "សញ្ញាជីវិត និងស្ថានភាពផ្លូវចិត្ត (Vital signs and mental state)", "ប្រវត្តិគ្រួសារ (Family history)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "១៩. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង រោគសញ្ញាគោល (Chief complaint):", t: 3, a: [0, 1, 2], o: ["លក្ខណៈនៃរោគសញ្ញាគោល (Nature of the chief complaint)", "រយៈពេលនៃរោគសញ្ញាគោល (Duration of the chief complaint)", "កាលបរិច្ឆេទនៃរោគសញ្ញាគោល (Date of the chief complaint)", "សញ្ញាជីវិត និងរោគសញ្ញា (Vital signs and symptoms)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២០. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ប្រវត្តិជំងឺបច្ចុប្បន្ន (History of present illness):", t: 3, a: [0, 1, 2], o: ["រោគសញ្ញាលម្អិតនៃជំងឺបច្ចុប្បន្ន (Detailed symptoms of the present illness)", "ការចាប់ផ្តើមនៃជំងឺបច្ចុប្បន្ន (Onset of the present illness)", "ការគ្រប់គ្រងលម្អិតនៃជំងឺបច្ចុប្បន្ន (Detailed management of the present illness)", "ប្រវត្តិលូតលាស់ និងអភិវឌ្ឍន៍ (Growth and Development of the patient)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២១. តើអត្ថន័យនេះ \"បញ្ហាចម្បងដែលនាំអ្នកជំងឺមកជួបអ្នកផ្តល់សេវាថែទាំសុខភាព\" (The main problem that has brought the patient to see the health care providers) សមស្របនឹងប្រភេទណាមួយជាងគេ?", t: 1, a: [0], o: ["រោគសញ្ញាគោល (Chief complaint)", "រោគសញ្ញា (Symptoms)", "ប្រវត្តិជំងឺបច្ចុប្បន្ន (History of the present illness)", "ប្រវត្តិវេជ្ជសាស្ត្រ (Medical history)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២២. តើអត្ថន័យនេះ \"ការរុករកលម្អិតនៃរោគសញ្ញាដែលអ្នកជំងឺកំពុងជួបប្រទះដែលបណ្តាលឱ្យអ្នកជំងឺស្វែងរកការព្យាបាល (វាអាចត្រូវបានបង្ហាញជាមួយតារាងរបារ)\" (A detailed exploration of the symptoms the patient is experiencing that have caused the patient to seek medical attention (It can be presented with a bar chart)) សមស្របនឹងប្រភេទណាមួយជាងគេ?", t: 1, a: [2], o: ["រោគសញ្ញាគោល (Chief complaint)", "រោគសញ្ញា (Symptoms)", "ប្រវត្តិជំងឺបច្ចុប្បន្ន (History of the present illness)", "ប្រវត្តិវេជ្ជសាស្ត្រ (Medical history)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២៣. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental state examination):", t: 3, a: [0, 1, 2], o: ["រូបរាងទូទៅ ការវិនិច្ឆ័យ និងការយល់ដឹង (General appearance, judgment and insight)", "អារម្មណ៍ និងការបញ្ចេញអារម្មណ៍ (Mood and affectivity)", "លក្ខណៈនៃការនិយាយ (Speech characteristics)", "ទំនាក់ទំនងផ្លូវភេទ (Sexual relationship)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២៤. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental state examination):", t: 3, a: [0, 1, 2], o: ["ការយល់ឃើញ ភាពជឿជាក់ និងភាពឆេវឆាវ (Perception, reliability, and impulsivity)", "ខ្លឹមសារគំនិត និងនិន្នាការផ្លូវចិត្ត (Thought content and mental trends)", "ប្រព័ន្ធវិញ្ញាណ និងការចងចាំ (Sensorium and cognition)", "សញ្ញាជីវិត និងរោគសញ្ញា (Vital sign and symptoms)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២៥. ជ្រើសយកព័ត៌មានដែលត្រូវសួរនៅក្នុង សញ្ញាជីវិត (Vital signs):", t: 3, a: [0, 1, 2], o: ["សីតុណ្ហភាព និងកម្រិតអុកស៊ីសែន (Temperature and oxygen saturation)", "អត្រាដង្ហើម និងការប្រឹងដកដង្ហើម (Respiratory rate work of breaths)", "ជីពចរ ចង្វាក់បេះដូង និងសម្ពាធឈាម (Pulse, heart rate, and blood pressure)", "ទំនាក់ទំនងផ្លូវភេទ (Sexual relationship)"] },
+            { c: "មេរៀនទី ៣: ការវាយតម្លៃពេលចូលសម្រាកពេទ្យ (Admission Assessment)", q: "២៦. ជ្រើសយកព័ត៌មានដែលត្រូវពិនិត្យនៅក្នុង ការវាស់វែងបន្ថែម (Additional measurement):", t: 3, a: [0, 1, 2], o: ["ទម្ងន់ និងកម្ពស់ (Weight and Height)", "រង្វង់ក្បាល (Head circumference)", "កម្រិតជាតិស្ករក្នុងឈាម (Blood sugar level)", "តារាងលូតលាស់ (Growth chart)"] },
+
+            // មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១. រូបរាង (Appearances) អ្វីខ្លះដែលគួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["ការស្លៀកពាក់ និងឥរិយាបថ (Dress and posture)", "ការបញ្ចេញទឹកមុខ (Facial expression)", "កាយវិការ (Mannerism)", "គំនិត និងការគិត (Thought and thinking)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "២. សកម្មភាព (Activities) អ្វីខ្លះដែលគួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 2, a: [0, 1], o: ["អង្គុយស្ងៀម (Sitting still)", "នៅមិនស្ងៀម (Fidgeting)", "ការស្ទះគំនិត (Thought blocking)", "គំនិតហោះហើរ/គំនិតរហ័ស (Flight of ideas)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "៣. ឥរិយាបថសង្គម និងអារម្មណ៍ (Social and emotional behavior) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["ភាពព្រងើយកន្តើយ (Apathy)", "ភាពឆាប់ខឹង (Irritability)", "កិច្ចសហប្រតិបត្តិការ (Cooperation)", "ការស្លៀកពាក់ និងឥរិយាបថ (Dress and posture)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "៤. លក្ខណៈនៃការនិយាយ (Speech) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["អត្រា និងសម្លេងនៃការនិយាយ (Rate and tone of speech)", "គុណភាពនៃការនិយាយ (Quality of speech)", "ទម្រង់ និងខ្លឹមសារនៃការនិយាយ (Form and content of speech)", "ការនិយាយបែបមនោសញ្ចេតនា (Romantic speech)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "៥. ទម្រង់នៃការនិយាយ (Forms of Speech) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["ការស្ទះគំនិត (Thought blocking)", "ការបន្ធូរទំនាក់ទំនងគំនិត (Loosening of association)", "គំនិតហោះហើរ/គំនិតរហ័ស (Flight of ideas)", "សម្លេង និងគុណភាពនៃការនិយាយ (Tone and quality of speech)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "៦. ខ្លឹមសារនៃការនិយាយ (Content of Speech) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 2, a: [0, 1], o: ["គំនិតបាក់ទឹកចិត្ត (Depressive ideas)", "គំនិតវង្វេង/ភាន់ច្រឡំ (Delusional ideas)", "សម្លេងនៃការនិយាយ (Tone of speech)", "អត្រានៃការនិយាយ (Rate of speech)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "៧. លក្ខណៈរបស់ អារម្មណ៍ (Mood) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["រីករាយ ធម្មតា ឬធ្លាក់ទឹកចិត្ត (Elated, Normal, or Low/Depressed)", "ថប់បារម្ភ ខឹង/ឆាប់ខឹង (Anxious, Angry/Irritable)", "ព្រងើយកន្តើយ (Apathetic)", "គំនិតហោះហើរ/គំនិតរហ័ស (Flight of ideas)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "៨. លក្ខណៈរបស់ ការបញ្ចេញអារម្មណ៍ (Affect) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["គុណភាពនៃការបញ្ចេញអារម្មណ៍ (Quality of affect)", "វិសាលភាពនៃការបញ្ចេញអារម្មណ៍ (Range of affect)", "ភាពសមស្របនៃការបញ្ចេញអារម្មណ៍ (Appropriateness of affect)", "អារម្មណ៍សរីរាង្គ (Organic affect)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "៩. គុណភាពនៃការបញ្ចេញអារម្មណ៍ (Quality of affect) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 2, a: [0, 1], o: ["សោកសៅ/អន្ទះសារ/អរិភាព (Sad/agitated/hostile)", "រីករាយខ្លាំង/សកម្ម (Euphoric/animated)", "មានកម្រិត (Restricted)", "ស្ពឹកស្រពន់ (Blunted)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១០. វិសាលភាពនៃការបញ្ចេញអារម្មណ៍ (Range of affect) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["ការបញ្ចេញអារម្មណ៍មានកម្រិត (Restricted affect)", "ការបញ្ចេញអារម្មណ៍ធម្មតា (Normal affect)", "ការបញ្ចេញអារម្មណ៍ទូលំទូលាយ (Expansive affect)", "ការបញ្ចេញអារម្មណ៍អន្ទះសារ (Agitated affect)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១១. ភាពសមស្របនៃការបញ្ចេញអារម្មណ៍ (Appropriateness of affect) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 2, a: [0, 1], o: ["ការបញ្ចេញអារម្មណ៍ស៊ីគ្នា (Congruent affect)", "ការបញ្ចេញអារម្មណ៍មិនស៊ីគ្នា (Incongruent affect)", "ការបញ្ចេញអារម្មណ៍ស្មើ (Flat affect)", "ការបញ្ចេញអារម្មណ៍មានកម្រិត (Restricted affect)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១២. ក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination), Affect សំដៅដល់?", t: 1, a: [0], o: ["ការប្រែប្រួលអារម្មណ៍ (Fluctuation of mood)", "ស្ថិរភាពនៃសកម្មភាព (Stability of activity)", "ការប្រែប្រួលគំនិត (Fluctuation of thought)", "ស្ថិរភាពនៃគំនិត (Stability of thought)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១៣. លក្ខណៈរបស់ ការគិត (thought) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["លំហូរនៃគំនិត (Stream of thought)", "ទម្រង់នៃគំនិត (Form of thought)", "ខ្លឹមសារនៃគំនិត (Content of thought)", "ការប្រែប្រួលគំនិត (Fluctuation of thought)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១៤. លំហូរនៃគំនិត (Stream of thought) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["ភាពក្រីក្រនៃគំនិត (Poverty of thought)", "ការគិតដដែលៗ (Perseveration)", "គំនិតរហ័ស/ហោះហើរ (Racing thought/Flight of ideas)", "គំនិតសមហេតុផល (Logical thought)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១៥. ទម្រង់នៃគំនិត (Form of thought) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["មានគោលដៅសមហេតុផល ឬច្របូកច្របល់ (Logical goal-directed or disordered)", "វាងវៃ/រអិលខុសផ្លូវ (Circumstantial/derailment)", "មិនជាប់លាប់/ពាក្យរាយប៉ាយ (Looseness of association/word salad)", "រហ័ស/ស្ទះគំនិត (Racing/thought blocking)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១៦. ខ្លឹមសារនៃគំនិត (Content of thought) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["ការគិតមមៃ ការភាន់ច្រឡំ (Obsession, delusion)", "ការភ័យខ្លាច ឬការគិតបែបអរូបី (Phobia or magical thinking)", "គំនិតធ្វើបាបខ្លួនឯង ឬអ្នកដទៃ (Thought of harm to self or others)", "មានគោលដៅសមហេតុផល (Logical goal-directed)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១៧. ប្រភេទ ការភាន់ច្រឡំដែលយោងមកខ្លួនឯង (Referential delusion) ក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 2, a: [0, 1], o: ["ការភាន់ច្រឡំក្នុងការប្រាស្រ័យទាក់ទង (Delusion of communication)", "ការភាន់ច្រឡំក្នុងការសង្កេត (Delusion of observation)", "ការភាន់ច្រឡំថាខ្លួនអស្ចារ្យ (Grandiose delusion)", "ការភាន់ច្រឡំអំពីរាងកាយ (Somatic delusion)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១៨. ប្រភេទ ការយល់ឃើញខុស (false perception) ក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 2, a: [0, 1], o: ["ការយល់ច្រឡំវិញ្ញាណ (Hallucination)", "ការយល់ច្រឡំវិញ្ញាណក្លែងក្លាយ (Pseudo-hallucination)", "ការភាន់ច្រឡំ (Delusion)", "ការភាន់ភ្នែក/មាយាការ (Illusion)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "១៩. ប្រភេទ ការយល់ដឹង (Cognition) គួរពិនិត្យក្នុង ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (mental state examination)?", t: 3, a: [0, 1, 2], o: ["កម្រិតនៃការដឹងខ្លួន (Level of consciousness)", "ការតម្រង់ទិស និងសមត្ថភាព (Orientation and ability)", "ការយកចិត្តទុកដាក់ និងការចងចាំ (Attention and memory)", "ការរំខានដល់ការយល់ឃើញ (Perceptual disturbance)"] },
+            { c: "មេរៀនទី HA4: ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental Status Examination)", q: "២០. ផលប៉ះពាល់ (Impacts) គួរវាយតម្លៃក្នុង ការរៀបចំទម្រង់ផ្លូវចិត្ត (Psychodynamic Formulation)?", t: 3, a: [0, 1, 2], o: ["ផលប៉ះពាល់ជីវសាស្ត្រ (Biological impacts)", "ផលប៉ះពាល់ផ្លូវចិត្ត (Psychological impacts)", "ផលប៉ះពាល់បរិស្ថាន (Environmental impacts)", "ផលប៉ះពាល់នៃផលវិបាក (Complication impacts)"] },
+
+            // មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "១. ជាទូទៅមុននឹងអនុវត្ត ការពិនិត្យរាងកាយ (Physical Assessment) គ្រូពេទ្យអនុវត្តនូវ:", t: 2, a: [0, 1], o: ["ការសាកសួរប្រវត្តិជំងឺ (History Taking)", "ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental State Examination)", "ការធ្វើតេស្តមន្ទីរពិសោធន៍ (Labs Tests/Paraclinical Examination)", "ការវាយតម្លៃតាមវេន (Shift Assessment)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "២. ការអនុវត្ត ការពិនិត្យរាងកាយ (Physical Examination) នាំឱ្យគ្រូពេទ្យទទួលបាននូវ:", t: 1, a: [0], o: ["សញ្ញាគ្លីនិក (Signs)", "រោគសញ្ញា (Symptoms)", "សញ្ញាគ្លីនិក និងរោគសញ្ញា (Signs and Symptoms)", "លទ្ធផលតេស្តមន្ទីរពិសោធន៍ (Lab test results)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "៣. ដើម្បីទទួលបាននូវ ការធ្វើរោគវិនិច្ឆ័យបឋម (Tentative Diagnosis) គ្រូពេទ្យត្រូវអនុវត្តនូវ:", t: 3, a: [0, 1, 2], o: ["ការសាកសួរប្រវត្តិជំងឺ (History Taking)", "ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental State Examination)", "ការពិនិត្យរាងកាយ (Physical Examination)", "ការធ្វើតេស្តមន្ទីរពិសោធន៍ (Lab tests)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "៤. ជ្រើសយកការពិនិត្យមួយចុងក្រោយដើម្បីបញ្ជាក់ពីការវិនិច្ឆ័យ (Confirm diagnosis):", t: 1, a: [3], o: ["ការសាកសួរប្រវត្តិជំងឺ (History Taking)", "ការពិនិត្យស្ថានភាពផ្លូវចិត្ត (Mental State Examination)", "ការពិនិត្យរាងកាយ (Physical Examination)", "ការធ្វើតេស្តមន្ទីរពិសោធន៍ (Lab tests / Paraclinical Examination)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "៥. ការពិនិត្យរាងកាយ (Physical assessment) ប្រើប្រាស់នូវ:", t: 3, a: [0, 1, 2], o: ["វិញ្ញាណក្លិន និងការស្ទាប (Sense of smell and touch)", "វិញ្ញាណមើលឃើញ (Sense of sight)", "វិញ្ញាណស្តាប់ (Sense of hearing)", "ការសាកសួរប្រវត្តិជំងឺ (History taking)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "៦. \"នីតិវិធីប្រមូលទិន្នន័យជាប្រព័ន្ធដែលប្រើវិញ្ញាណនៃក្លិន ការមើលឃើញ ការប៉ះ និងការស្តាប់ ដើម្បីស្វែងរកបញ្ហាសុខភាព\" (The systematic data collection procedure that use the senses of smell, sight, touch, and hearing to detect health problem) គឺថា:", t: 1, a: [0], o: ["ការពិនិត្យរាងកាយ (Physical Examination)", "ការសាកសួរប្រវត្តិជំងឺ (History taking)", "ការធ្វើតេស្តមន្ទីរពិសោធន៍ (Lab test)", "ការពិនិត្យអមគ្លីនិក (Paraclinical examination)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "៧. ការពិនិត្យរាងកាយ (Physical assessment) ប្រើប្រាស់នូវ:", t: 3, a: [0, 1, 2], o: ["ការពិនិត្យដោយមើល (Inspection)", "ការពិនិត្យដោយស្តាប់ (Auscultation)", "ការស្ទាប និងការគោះ (Palpation and Percussion)", "ការសាកសួរ (Interrogation)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "៨. ការប្រើប្រាស់ចក្ខុវិញ្ញាណដើម្បីស្វែងរករូបរាងធម្មតា និងមិនធម្មតា (The use of vision to detect normal and abnormal appearances) គឺជាបច្ចេកទេស:", t: 1, a: [0], o: ["ការពិនិត្យដោយមើល (Inspection)", "ការពិនិត្យដោយស្តាប់ (Auscultation)", "ការពិនិត្យដោយគោះ (Percussion)", "ការពិនិត្យដោយស្ទាប (Palpation)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "៩. ការប្រើប្រាស់ដៃដើម្បីដឹងពីភាពមិនប្រក្រតីអំឡុងពេលវាយតម្លៃសុខភាព (The uses of hands to feel for abnormalities during a health assessment) គឺជាបច្ចេកទេស:", t: 1, a: [3], o: ["ការពិនិត្យដោយមើល (Inspection)", "ការពិនិត្យដោយស្តាប់ (Auscultation)", "ការពិនិត្យដោយគោះ (Percussion)", "ការពិនិត្យដោយស្ទាប (Palpation)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "១០. ការប្រើប្រាស់ដៃដើម្បីគោះលើផ្ទៃនៃរាងកាយរបស់អ្នកជំងឺដើម្បីស្វែងរកភាពមិនប្រក្រតី (The uses of hands to tap on an area of patient’s body to detect abnormalities) គឺជាបច្ចេកទេស:", t: 1, a: [2], o: ["ការពិនិត្យដោយមើល (Inspection)", "ការពិនិត្យដោយស្តាប់ (Auscultation)", "ការពិនិត្យដោយគោះ (Percussion)", "ការពិនិត្យដោយស្ទាប (Palpation)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "១១. ការប្រើប្រាស់ត្រចៀកដើម្បីស្វែងរកសម្លេងមិនធម្មតានៅក្នុងរាងកាយរបស់អ្នកជំងឺ (The uses of ears to detect abnormal sounds in patient’s body) គឺជាបច្ចេកទេស:", t: 1, a: [1], o: ["ការពិនិត្យដោយមើល (Inspection)", "ការពិនិត្យដោយស្តាប់ (Auscultation)", "ការពិនិត្យដោយគោះ (Percussion)", "ការពិនិត្យដោយស្ទាប (Palpation)"] },
+            { c: "មេរៀនទី ៥: ការពិនិត្យរាងកាយ (Physical Assessment)", q: "១២. គ្រូពេទ្យអនុវត្ត ការមើល (Inspection) ដើម្បីដឹងអំពី:", t: 2, a: [0, 1], o: ["ពណ៌ និងទម្រង់ (Color and Form)", "ឥរិយាបថ និងចលនា (Posture and Movement)", "ការឈឺចាប់ (Pain)", "សីតុណ្ហភាព (Temperature)"] },
+            { c: "មេរៀនទី ៥: Physical Assessment", q: "១៣. គ្រូពេទ្យអនុវត្ត ការស្ទាប (Palpation) ដើម្បីដឹងអំពី:", t: 2, a: [2, 3], o: ["ពណ៌ និងទម្រង់ (Color and Form)", "ឥរិយាបថ និងចលនា (Posture and Movement)", "ការឈឺចាប់ (Pain)", "សីតុណ្ហភាព (Temperature)"] },
+            { c: "មេរៀនទី ៥: Physical Assessment", q: "១៤. គ្រូពេទ្យអនុវត្ត ការគោះ (Percussion) ដើម្បីដឹងអំពី:", t: 1, a: [3], o: ["ពណ៌ (Color)", "ឥរិយាបថ (Posture)", "ការឈឺចាប់ (Pain)", "ដុំពក និងសម្លេង (Mass and Sounds)"] },
+            { c: "មេរៀនទី ៥: Physical Assessment", q: "១៥. គ្រូពេទ្យអនុវត្ត ការស្តាប់ (Auscultation) ដើម្បីដឹងអំពី:", t: 2, a: [2, 3], o: ["ពណ៌ និងទម្រង់ (Color and Form)", "ឥរិយាបថ និងចលនា (Posture and Movement)", "សម្លេងចលនាពោះវៀន (Peristalsis sounds)", "សម្លេងដង្ហើម និងសម្លេងផ្លុំ (Rale and Souffle sounds)"] },
+            { c: "មេរៀនទី ៥: Physical Assessment", discussion: "សំណួរពិភាក្សា (Discussion Question)៖ រៀបរាប់ពីដំណើរការក្នុងការពិនិត្យជំងឺដើម្បីធ្វើរោគវិនិច្ឆ័យ? (Describe the clinical diagnostic process?)" },
+
+            // មេរៀនទី ៦ និង ៧: ការវាយតម្លៃចំគោលដៅ (Focus Assessment)
+            { c: "មេរៀនទី ៦ និង ៧: ការវាយតម្លៃចំគោលដៅ (Focus Assessment)", q: "១. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យប្រព័ន្ធប្រសាទ (Neurological system examination):", t: 3, a: [0, 1, 2], o: ["ទំហំប្រស្រីភ្នែក និងប្រតិកម្មនឹងពន្លឺ (Pupil size and reaction to light)", "មុខងារចលនា (ចលនាដៃ ជើង...) (Motor functions...)", "មុខងារវិញ្ញាណ (ស្ពឹក ស្រគាល...) (Sensory functions...)", "ជីពចរកណ្តាល (Central pulse)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យប្រព័ន្ធប្រសាទ (Neurological system examination):", t: 3, a: [0, 1, 2], o: ["ការដឹងខ្លួន (សន្លប់ ច្របូកច្របល់...) (Consciousness...)", "មុខងារចលនា (ចលនាដៃ ជើង...) (Motor functions...)", "មុខងារវិញ្ញាណ (រសជាតិ ក្លិន ស្រគាល...) (Sensory functions...)", "ការប្រឹងដកដង្ហើម (Work of breathing)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "៣. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ខ្នាតវាស់កម្រិតសន្លប់ (Glasgow coma scale):", t: 3, a: [0, 1, 2], o: ["បើកភ្នែកដោយឯកឯង (Eyes open spontaneously)", "បើកភ្នែកតែពេលប៉ះ ឬនិយាយរក (Eyes open only when touched or spoken)", "បើកភ្នែកតែពេលឈឺចាប់ ឬមិនបើកសោះ (Eyes open only to pain or not at all)", "ភ្នែកស្មើគ្នា ឬអត់ (Eyes symmetry or not)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "៤. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យជំនាញចលនាធំៗ (Gross motor skill examination):", t: 3, a: [0, 1, 2], o: ["ឥរិយាបថ និងលំនឹង (Posture and balance)", "ចលនា (Movement)", "កម្លាំង និងទម្រង់សាច់ដុំ (Muscular strength and tone)", "ការមើលឃើញ និងការស្តាប់ (Vision and hearing)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "៥. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យមុខងារវិញ្ញាណ (Sensory functions examination):", t: 3, a: [0, 1, 2], o: ["រសជាតិ និងការស្តាប់ (Taste and hearing)", "ការមើលឃើញ និងក្លិន (Vision and smell)", "ការឆ្លើយតបនឹងការប៉ះ (Response to tactile stimuli)", "ឥរិយាបថ និងចលនា (Posture and movement)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "៦. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យប្រព័ន្ធប្រសាទ (Neurological system examination):", t: 3, a: [0, 1, 2], o: ["ការប្រកាច់ (Seizures)", "ការលូតលាស់ និងការអភិវឌ្ឍ (Growth and development)", "ជំនាញចលនាធំៗ (Gross motor skills)", "ចលនាពោះវៀន (Peristalsis)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "៧. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យការប្រកាច់ (Seizures examination):", t: 3, a: [0, 1, 2], o: ["ការចាប់ផ្តើម និងកត្តាជំរុញការប្រកាច់ (Onset and precipitating factors of seizures)", "លក្ខណៈនៃការប្រកាច់ (Nature of Seizures)", "កាលបរិច្ឆេទ និងរយៈពេលនៃការប្រកាច់ (Date and duration of seizures)", "ថ្នាំការពារការប្រកាច់ (Drugs for preventing seizures)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "៨. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យការលូតលាស់ និងការអភិវឌ្ឍ (Growth and development examination):", t: 3, a: [0, 1, 2], o: ["ប្រវត្តិនៃការសម្រេចបានគោលដៅលូតលាស់ (History on attaining milestone)", "ការអភិវឌ្ឍន៍ភាសា (Language development)", "ការគ្រប់គ្រងប្លោកនោម/ពោះវៀន (Bladder/bowel control)", "រាង/ភាពស៊ីមេទ្រីនៃពោះ (Sharp/symmetry of the abdomen)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "៩. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការមើលប្រព័ន្ធដង្ហើម (Respiratory system inspection):", t: 3, a: [0, 1, 2], o: ["ការប្រឹងដកដង្ហើម (Work of breathing)", "អត្រា ចង្វាក់ និងជម្រៅដង្ហើម (Respiratory rate, rhythms, and depth)", "ភាពស៊ីមេទ្រី និងរាងនៃទ្រូង (Symmetry and sharp of chest)", "ឥរិយាបថ និងលំនឹង (Posture and balance)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១០. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការស្តាប់ប្រព័ន្ធដង្ហើម (Respiratory system auscultation):", t: 2, a: [0, 1], o: ["ភាពស្មើគ្នានៃសម្លេងដង្ហើម (Equality of breath sounds)", "សម្លេងរំខានបន្ថែម (Adventitious noises)", "អវត្តមានសម្លេងដង្ហើម (Absence of breath sounds)", "ជីពចរកណ្តាល (Central pulse)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១១. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការគោះប្រព័ន្ធដង្ហើម (Respiratory system percussion):", t: 3, a: [0, 1, 2], o: ["ទីតាំងនៃសម្លេងមិនធម្មតា (Location of abnormal sounds)", "លក្ខណៈនៃសម្លេងគោះ (Nature of percussion sounds)", "អត្រាដង្ហើម (Respiratory rate)", "ចង្វាក់ដង្ហើម (Respiratory rhythms)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១២. ចំណុចដែលត្រូវអនុវត្តក្នុងពេលធ្វើ ការពិនិត្យរាងកាយ (Physical examination):", t: 3, a: [0, 1, 2], o: ["ការពិនិត្យដោយមើល/សង្កេត (Inspection/observation)", "ការពិនិត្យដោយស្តាប់ (Auscultation)", "ការស្ទាប/ការគោះ (Palpation/percussion)", "ការសាកសួរប្រវត្តិជំងឺ (History taking)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១៣. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យប្រព័ន្ធបេះដូង និងសរសៃឈាម (Cardiovascular system examination):", t: 3, a: [0, 1, 2], o: ["ពណ៌ស្បែក និងវត្តមាននៃការហើម (Skin color and Presence of oedema)", "ស្ថានភាពជាតិទឹក (Hydration status)", "ពេលវេលាបំពេញឈាមសរសៃប្តូរ (Capillary Refill Time - CRT)", "ការប្រឹងដកដង្ហើម (Work of breathing)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១៤. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការស្ទាបប្រព័ន្ធបេះដូង និងសរសៃឈាម (Cardiovascular system palpation):", t: 2, a: [0, 1], o: ["ជីពចរកណ្តាល និងចុងដៃចុងជើង (Central and peripheral pulses)", "ស្ថានភាពស្បែក (Skin condition)", "ពណ៌ស្បែក (Skin color)", "អត្រាដង្ហើម (Rate of breaths)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១៥. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការស្តាប់ប្រព័ន្ធបេះដូង និងសរសៃឈាម (Cardiovascular system auscultation):", t: 2, a: [0, 1], o: ["ជីពចរចុងបេះដូង (Apical pulse)", "លក្ខណៈនៃសម្លេងបេះដូង (Nature of hear sounds)", "ពេលវេលាបំពេញឈាមសរសៃប្តូរ (Capillary Refill Time)", "ពណ៌ និងស្ថានភាពស្បែក (Skin color and condition)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១៦. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យប្រព័ន្ធរំលាយអាហារ (Gastrointestinal system examination):", t: 3, a: [0, 1, 2], o: ["រាង និងភាពស៊ីមេទ្រីនៃពោះ (Sharp and symmetry of abdomen)", "ចលនាពោះវៀន (Bowel motility and peristalsis)", "ស្ថានភាពសម្លេង និងការឈឺចាប់ (Sounds and pain status)", "ការប្រឹងដកដង្ហើម (Work of breathing)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១៧. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការមើលប្រព័ន្ធរំលាយអាហារ (Gastrointestinal system inspection):", t: 3, a: [0, 1, 2], o: ["រាង/ភាពស៊ីមេទ្រីនៃពោះ (Sharp/Symmetry of the abdomen)", "ទម្រង់នៃពោះ (Contour of the abdomen)", "ចលនាពោះវៀនដែលអាចមើលឃើញ (Visible peristalsis)", "សម្លេងពោះវៀន (Bowel sounds)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១៨. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការស្ទាបប្រព័ន្ធរំលាយអាហារ (Gastrointestinal system palpation):", t: 2, a: [0, 1], o: ["លក្ខណៈ និងទីតាំងការឈឺចាប់ (Pain characteristics and location)", "ភាពឈឺចាប់នៅពេលសង្កត់ពោះ (Tenderness of abdomen)", "ចលនាពោះវៀនដែលអាចមើលឃើញ (Visible peristalsis)", "សម្លេងពោះវៀន (Bowel sounds)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "១៩. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការស្តាប់ប្រព័ន្ធរំលាយអាហារ (Gastrointestinal system auscultation):", t: 1, a: [3], o: ["លក្ខណៈ និងទីតាំងការឈឺចាប់ (Pain characteristics and location)", "ភាពឈឺចាប់នៅពេលសង្កត់ពោះ (Tenderness of abdomen)", "ចលនាពោះវៀនដែលអាចមើលឃើញ (Visible peristalsis)", "សម្លេងពោះវៀន (Bowel sounds)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២០. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យប្រព័ន្ធតម្រងនោម (Renal system examination):", t: 3, a: [0, 1, 2], o: ["ទម្រង់នៃការនោម (Urinary pattern)", "បរិមាណទឹកនោម (Urines outputs)", "ស្ថានភាពជាតិទឹក (Hydration status)", "រាង/ភាពស៊ីមេទ្រីនៃពោះ (Sharp/symmetry of abdomen)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២១. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការមើលប្រព័ន្ធសាច់ដុំ និងឆ្អឹង (Musculoskeletal system inspection):", t: 3, a: [0, 1, 2], o: ["ឥរិយាបថ ចលនា និងភាពស៊ីមេទ្រីរាងកាយ (Posture, movement and body symmetry)", "អវយវៈ: ហើម ក្រហម ខូចទ្រង់ទ្រាយ (Limbs: swelling, redness, deformity)", "សន្លាក់: ហើម ក្រហម (Joints: swelling, redness)", "កម្លាំងសាច់ដុំ (Muscular strength)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២២. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការស្ទាបប្រព័ន្ធសាច់ដុំ និងឆ្អឹង (Musculoskeletal system palpation):", t: 3, a: [0, 1, 2], o: ["កម្លាំងសាច់ដុំ (Muscular strength)", "ទម្រង់សាច់ដុំ (Muscular tone)", "អវយវៈសម្រាប់ការឈឺចាប់ ឬភាពឈឺពេលសង្កត់ (Limbs for pain or tenderness)", "ឥរិយាបថ និងភាពស៊ីមេទ្រីរាងកាយ (Posture and body symmetry)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២៣. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការមើលប្រព័ន្ធស្បែក (skin and tegument system inspection):", t: 3, a: [0, 1, 2], o: ["ពណ៌នៃស្បែក (Color of the skin)", "មុខរបួស និងរបួសផ្សេងៗ (Wounds and injuries)", "ស្ថានភាពសក់ (Hair status)", "សីតុណ្ហភាពស្បែក (Skin temperature)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២៤. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការស្ទាបប្រព័ន្ធស្បែក (skin and tegument system palpation):", t: 3, a: [0, 1, 2], o: ["សីតុណ្ហភាពស្បែក (Skin temperature)", "វាយនភាពសក់ (Hair texture for brittleness)", "សំណើមស្បែក និងសក់ (Skin and hair moisture)", "ពណ៌ស្បែក (Skin color)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២៥. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យភ្នែក (Eyes examination):", t: 3, a: [0, 1, 2], o: ["រាង/ភាពស៊ីមេទ្រីនៃប្រស្រីភ្នែក (Sharp/symmetry of pupils)", "កញ្ចក់ភ្នែក និងត្របកភ្នែក (Conjunctiva and eyelids)", "ដំណើរការមើលឃើញ (Visual performance)", "ការស្តាប់ និងរសជាតិ (Hearing and taste)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២៦. ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការពិនិត្យ ត្រចៀក/ច្រមុះ/បំពង់ក (Ear/Nose/Throat examination):", t: 3, a: [0, 1, 2], o: ["របួសខាងក្រៅ/ការរលាក (External trauma/ inflammation)", "ស្លេស/ភាពស្ងួត/សារធាតុរាវ ត្រចៀក/ច្រមុះ (Ear/Nose mucus/dryness/fluid)", "ស្ថានភាពបំពង់ក (Throat status)", "ដំណើរការមើលឃើញ (Visual performance)"] },
+            { c: "មេរៀនទី ៦ និង ៧: Focus Assessment", q: "២៧. ដើម្បីធ្វើ ការវិនិច្ឆ័យបឋមនៃការពិនិត្យគ្លីនិក (Tentative diagnosis of clinical examination) យើងប្រើទិន្នន័យពីរសំខាន់គឺ:", t: 2, a: [0, 1], o: ["រោគសញ្ញា (Symptoms)", "សញ្ញាគ្លីនិក (Signs)", "ការធ្វើតេស្តមន្ទីរពិសោធន៍ (Lab test)", "លទ្ធផលរូបភាពវេជ្ជសាស្ត្រ (Imaging result)"] },
+
+            // មេរៀនទី ៨: ការវាយតម្លៃតាមវេន (Shift Assessment)
+            { c: "មេរៀនទី ៨: ការវាយតម្លៃតាមវេន (Shift Assessment)", q: "១. ជ្រើសយក ២ ដែលត្រឹមត្រូវបំផុត។ ការវាយតម្លៃតាមវេន (Shift assessment) គឺជា ការវាយតម្លៃគិលានុបដ្ឋាកដែលបានបញ្ចប់នៅ (nursing assessment completed at):", t: 2, a: [0, 1], o: ["ការចាប់ផ្តើមនៃវេននីមួយៗ (Commencement of each shift)", "ស្ថានភាពអ្នកជំងឺប្រែប្រួលក្នុងវេន (Patient condition change during your shift)", "ពេលចូលសម្រាកពេទ្យ (The time of admission)", "ពេលអ្នកជំងឺមានស្ថានភាពមានស្ថិរភាព (The time of patient stable condition)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "២. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃតាមវេន (Shift assessment):", t: 3, a: [0, 1, 2], o: ["សីតុណ្ហភាព ជីពចរ និងចង្វាក់បេះដូង (Temperature, pulse and heart rate)", "អត្រាដង្ហើម និងកម្រិតអុកស៊ីសែន (Respiratory rate and oxygen saturation)", "សម្ពាធឈាម និងការឈឺចាប់ (Blood pressure and pain)", "ការលូតលាស់ និងការអភិវឌ្ឍ (Growth and Development)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "៣. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃតាមវេន (Shift assessment):", t: 3, a: [0, 1, 2], o: ["ស្ថានភាពផ្លូវដង្ហើម និងការដកដង្ហើម (Airway and breathing situation)", "ស្ថានភាពចរន្តឈាម និងស្បែក (Circulation and skin situation)", "ពិការភាព និងការបញ្ចេញចោល (Disability and output elimination)", "ប្រវត្តិជំងឺបច្ចុប្បន្ន (History of present illness)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "៤. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃការដកដង្ហើម (breathing assessment):", t: 3, a: [0, 1, 2], o: ["សម្លេងដង្ហើម (Breathing sounds)", "អត្រា ចង្វាក់ និងជម្រៅនៃការដកដង្ហើម (Breathing rate, rhythms, and depth)", "ជំនួយការដកដង្ហើម (Breathing assists)", "សមាសភាពខ្យល់ (Air composition)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "៥. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃជីពចរ (pulse assessment):", t: 3, a: [0, 1, 2], o: ["អត្រាជីពចរ (Pulse rate)", "ចង្វាក់ជីពចរ (Pulse rhythms)", "កម្លាំងជីពចរ (Pulse strength)", "សម្លេងជីពចរ (Pulse sounds)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "៦. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃចរន្តឈាម (circulation assessment):", t: 3, a: [0, 1, 2], o: ["ជីពចរ ពណ៌ស្បែក និងសំណើម (Pulse, skin color and moisture)", "សីតុណ្ហភាពចុងដៃចុងជើង (Peripheral temperature)", "ពេលវេលាបំពេញឈាមសរសៃប្តូរ (Capillary Refill Time)", "ការប្រឹងដកដង្ហើម (Work of breathing)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "៧. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃពិការភាព (Disability assessment):", t: 3, a: [0, 1, 2], o: ["ឧបករណ៍ជំនួយចលនា និងតម្រូវការផ្លាស់ទី (Mobility aids and transfer needs)", "ឧបករណ៍ជំនួយការមើល និងស្តាប់ (Visual and hearing aids)", "ចលនា ឬការដើរមិនធម្មតា (Abnormal movement or gait)", "ពណ៌ស្បែក និងសំណើម (Skin color and moisture)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "៨. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃការបញ្ចេញចោល (Output/elimination assessment):", t: 3, a: [0, 1, 2], o: ["ទម្រង់នៃការបន្ទោរបង់ (Bowel patterns)", "ទម្រង់នៃការនោម (Urinary patterns)", "ប្លោកនោម (Bladder)", "ការមើលឃើញ និងការស្តាប់ (Visual and hearing)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "៩. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃការបញ្ចូល/អាហារូបត្ថម្ភ (Input/nutrition assessment):", t: 3, a: [0, 1, 2], o: ["ចំណង់អាហារ និងការទទួលយកអាហារ (Appetite and food tolerance)", "ចង្អោរ និងក្អួត (Nausea and vomiting)", "ជាតិទឹក និងស្ថានភាពសំណើម (Fluids and hydration)", "ទម្រង់នៃការនោម (Urinary patterns)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "១០. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃផ្លូវដង្ហើម (airway assessment):", t: 3, a: [0, 1, 2], o: ["សម្លេងដង្ហើម (Breathing sounds (noise))", "ស្លេសផ្លូវដង្ហើម (Airway secretion)", "ការស្ទះផ្លូវដង្ហើម (Airway obstacles)", "ចង្អោរ និងក្អួត (Nausea and vomiting)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "១១. ជ្រើសយក ៣ ដែលត្រឹមត្រូវបំផុត។ ចំណុចដែលត្រូវពិនិត្យក្នុងពេលធ្វើ ការវាយតម្លៃតាមវេន (Shift assessment):", t: 3, a: [0, 1, 2], o: ["ការបញ្ចូល និងអាហារូបត្ថម្ភ (Input and nutrition)", "ពិការភាព (Disability)", "សម្ពាធឈាម (Blood pressure)", "ស្ថានភាពគ្រួសារ (Family situation)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", q: "១២. ជ្រើសយក ២ ដែលត្រឹមត្រូវបំផុត។ ការវាយតម្លៃតាមវេន (Shift assessment) គឺជា ការវាយតម្លៃគិលានុបដ្ឋាកដែលបានបញ្ចប់នៅ (nursing assessment completed at):", t: 2, a: [0, 1], o: ["ការចាប់ផ្តើមនៃវេននីមួយៗ (Commencement of each shift)", "ស្ថានភាពអ្នកជំងឺប្រែប្រួលក្នុងវេន (Patient condition change during your shift)", "ពេលចូលសម្រាកពេទ្យ (The time of admission)", "ពេលអ្នកជំងឺចេញពីមន្ទីរពេទ្យ (The time of patient discharged from hospital)"] },
+            { c: "មេរៀនទី ៨: Shift Assessment", discussion: "សំណួរពិភាក្សា (Discussion Question)៖ តើគ្រូពេទ្យគួរអនុវត្តការវាយតម្លៃតាមវេន (Shift Assessment) នៅពេលណាខ្លះ?" }
+        ];
+
+        // Audio Context for feedback
+        let audioCtx = null;
+        function playTone(freq, type, duration) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+        const playCorrect = () => playTone(880, 'sine', 0.2);
+        const playWrong = () => playTone(220, 'square', 0.2);
+
+        let totalQuestions = 0;
+
+        function initMCQs() {
+            const container = document.getElementById('quiz-container');
+            let currentChapter = "";
+
+            mcqs.forEach((m, idx) => {
+                // Insert Chapter Header
+                if (m.c !== currentChapter) {
+                    currentChapter = m.c;
+                    const chapterHeader = document.createElement('div');
+                    chapterHeader.className = "chapter-header text-white px-6 py-4 rounded-xl shadow-md mt-10 mb-6";
+                    chapterHeader.innerHTML = `<h2 class="text-2xl font-bold">${currentChapter}</h2>`;
+                    container.appendChild(chapterHeader);
+                }
+
+                // Handle Discussion Questions differently
+                if (m.discussion) {
+                    const discDiv = document.createElement('div');
+                    discDiv.className = "bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-lg shadow-sm mt-8";
+                    discDiv.innerHTML = `<h3 class="text-lg font-bold text-amber-800 mb-1">✍️ ${m.discussion}</h3><p class="text-sm text-amber-600">សូមត្រៀមចម្លើយសម្រាប់ពិភាក្សានៅក្នុងថ្នាក់។ (Please prepare your answer for class discussion.)</p>`;
+                    container.appendChild(discDiv);
+                    return; // Skip standard MCQ rendering
+                }
+
+                totalQuestions++;
+                
+                const qDiv = document.createElement('div');
+                qDiv.className = 'mcq-wrapper p-6 border rounded-xl bg-white shadow-sm transition-all duration-300';
+                qDiv.id = `wrapper-q${idx}`;
+                
+                // Input Type (Radio for 1 answer, Checkbox for multiple)
+                const isMulti = m.t > 1;
+                const inputType = isMulti ? 'checkbox' : 'radio';
+                const helperText = isMulti ? `<span class="text-sm text-blue-600 font-bold bg-blue-100 px-3 py-1 rounded-full ml-2">(ជ្រើសរើស ${m.t} / Select ${m.t})</span>` : '';
+
+                qDiv.innerHTML = `
+                    <p class="font-bold text-lg text-gray-800 mb-4 leading-relaxed">${m.q} ${helperText}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 options-grid" id="grid-q${idx}">
+                        ${m.o.map((opt, oIdx) => `
+                            <label class="flex items-start p-4 border rounded-xl hover:bg-slate-50 cursor-pointer transition relative group overflow-hidden bg-white shadow-sm">
+                                <input type="${inputType}" name="q${idx}" value="${oIdx}" class="mt-1 mr-3 w-5 h-5 text-blue-600 hidden" onchange="checkAnswer(${idx})">
+                                <div class="w-5 h-5 mt-0.5 mr-3 border-2 border-gray-300 rounded${isMulti ? '' : '-full'} check-indicator flex-shrink-0"></div>
+                                <span class="text-gray-700 leading-relaxed">${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(qDiv);
+            });
+            
+            document.getElementById('total-qs').textContent = totalQuestions;
+        }
+
+        // Logic to check answer instantly when selected
+        function checkAnswer(qIdx) {
+            const m = mcqs[qIdx];
+            const grid = document.getElementById(`grid-q${qIdx}`);
+            const wrapper = document.getElementById(`wrapper-q${qIdx}`);
+            const labels = grid.querySelectorAll('label');
+            const checkedBoxes = grid.querySelectorAll(`input[name="q${qIdx}"]:checked`);
+            
+            // Wait until user selects the required number of options
+            if (checkedBoxes.length === m.t) {
+                grid.classList.add('disabled-labels');
+                let isPerfect = true;
+                
+                // Evaluate selected boxes
+                checkedBoxes.forEach(cb => {
+                    const val = parseInt(cb.value);
+                    if (m.a.includes(val)) {
+                        labels[val].classList.add('option-correct');
+                    } else {
+                        labels[val].classList.add('option-incorrect');
+                        isPerfect = false;
+                    }
+                });
+                
+                // Reveal the correct answers that were missed
+                m.a.forEach(correctVal => {
+                    labels[correctVal].classList.add('option-correct');
+                });
+
+                if (isPerfect) {
+                    playCorrect();
+                    wrapper.classList.add('border-green-300', 'bg-green-50/30');
+                } else {
+                    playWrong();
+                    wrapper.classList.add('border-red-300', 'bg-red-50/30');
+                }
+            } else if (checkedBoxes.length > m.t) {
+                // Prevent checking more than required by unchecking the last clicked
+                event.target.checked = false;
+            }
+        }
+
+        function gradeQuiz() {
+            let totalScore = 0;
+            
+            mcqs.forEach((m, idx) => {
+                if(m.discussion) return;
+                
+                const checkedBoxes = document.querySelectorAll(`input[name="q${idx}"]:checked`);
+                let isPerfect = false;
+
+                if (checkedBoxes.length === m.t) {
+                    isPerfect = true;
+                    checkedBoxes.forEach(cb => {
+                        if (!m.a.includes(parseInt(cb.value))) {
+                            isPerfect = false;
+                        }
+                    });
+                }
+                
+                if (isPerfect) totalScore++;
+                
+                // Auto-evaluate any unanswered questions
+                if (checkedBoxes.length < m.t && checkedBoxes.length > 0) {
+                     // Force trigger check on incomplete answers
+                     checkAnswer(idx); 
+                }
+            });
+
+            document.getElementById('score').textContent = totalScore;
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('submit-btn-container').style.display = 'none';
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        window.onload = initMCQs;
+    </script>
+</body>
+</html>
